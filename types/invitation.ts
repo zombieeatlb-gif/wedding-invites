@@ -1,31 +1,19 @@
 export interface WeddingInvitationData {
   templateId: string;
   couple: {
-    groom: string;
     bride: string;
+    groom: string;
   };
-  event: {
+  details: {
+    invitationText: string;
     date: string;
     time: string;
-    venue: string;
     address: string;
-    mapsUrl: string;
-  };
-  text: {
-    heroSubtitle: string;
-    invitationHeading: string;
-    invitationMessage: string;
-    closingMessage: string;
-  };
-  typography: {
-    headingFont: string;
-    bodyFont: string;
-    headingSize: string;
+    googleMapsUrl: string;
+    wazeUrl: string;
   };
   colors: {
     primary: string;
-    secondary: string;
     background: string;
-    text: string;
   };
 }
