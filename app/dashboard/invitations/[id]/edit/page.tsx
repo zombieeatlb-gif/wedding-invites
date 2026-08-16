@@ -84,8 +84,30 @@ export default function EditorPage() {
           <div>
             <h2 className="text-xl font-bold mb-4">Names & Colors</h2>
             <div className="space-y-4">
-              <input type="text" placeholder="Bride" className="w-full p-2 border rounded" value={data.couple.bride} onChange={(e) => handleChange('couple', 'bride', e.target.value)} />
-              <input type="text" placeholder="Groom" className="w-full p-2 border rounded" value={data.couple.groom} onChange={(e) => handleChange('couple', 'groom', e.target.value)} />
+              
+              {/* PAYMENT LOCK NOTICE */}
+              {data.isPaid && (
+                <div className="bg-blue-50 text-blue-800 text-xs p-3 rounded-md mb-2 border border-blue-200">
+                  <span className="font-bold">Nama telah dikunci.</span> Kad jemputan ini telah dibayar, nama pengantin tidak boleh ditukar bagi mengelakkan penggunaan semula.
+                </div>
+              )}
+
+              <input 
+                type="text" 
+                placeholder="Bride" 
+                className="w-full p-2 border rounded disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed" 
+                value={data.couple.bride} 
+                onChange={(e) => handleChange('couple', 'bride', e.target.value)} 
+                disabled={data.isPaid === true}
+              />
+              <input 
+                type="text" 
+                placeholder="Groom" 
+                className="w-full p-2 border rounded disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed" 
+                value={data.couple.groom} 
+                onChange={(e) => handleChange('couple', 'groom', e.target.value)} 
+                disabled={data.isPaid === true}
+              />
               <div className="grid grid-cols-2 gap-4">
                 <div><label className="text-xs">Primary</label><input type="color" className="w-full h-10 cursor-pointer" value={data.colors.primary} onChange={(e) => handleChange('colors', 'primary', e.target.value)} /></div>
                 <div><label className="text-xs">Background</label><input type="color" className="w-full h-10 cursor-pointer" value={data.colors.background} onChange={(e) => handleChange('colors', 'background', e.target.value)} /></div>

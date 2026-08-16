@@ -1,5 +1,6 @@
 export interface WeddingInvitationData {
   templateId: string;
+  isPaid: boolean;
   couple: {
     bride: string;
     groom: string;

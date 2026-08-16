@@ -15,6 +15,7 @@ export const templates: Record<string, React.FC<{ data: any }>> = {
 
 export const defaultTemplateData = {
   templateId: 'elegant',
+  isPaid: false,
   couple: {
     bride: 'Aisyah',
     groom: 'Ahmad'
