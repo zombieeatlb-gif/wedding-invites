@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { collection, getDocs, addDoc, deleteDoc, doc, query, where } from 'firebase/firestore';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 import { db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { defaultTemplateData } from '@/templates/registry';
-import { Plus, Edit2, Trash2, Share2, ExternalLink } from 'lucide-react';
+import { Plus, Edit2, Trash2, Share2, ExternalLink, LogOut } from 'lucide-react';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -14,15 +14,14 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // 1. Check who is logged in first!
+  // 1. Check who is logged in
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUserId(user.uid);
-        fetchMyInvitations(user.uid); // Only fetch THEIR cards
+        fetchMyInvitations(user.uid);
       } else {
-        // If not logged in, kick them to a login page
         router.push('/login'); 
       }
     });
@@ -33,7 +32,6 @@ export default function DashboardPage() {
   const fetchMyInvitations = async (uid: string) => {
     setLoading(true);
     try {
-      // THIS IS THE SECURITY LOCK: where("userId", "==", uid)
       const q = query(collection(db, 'invitations'), where("userId", "==", uid));
       const querySnapshot = await getDocs(q);
       
@@ -49,14 +47,14 @@ export default function DashboardPage() {
     }
   };
 
-  // 3. Create a brand new invitation and attach THEIR user ID to it
+  // 3. Create a brand new invitation
   const handleCreateNew = async () => {
     if (!userId) return;
     
     try {
       const docRef = await addDoc(collection(db, 'invitations'), {
         ...defaultTemplateData,
-        userId: userId, // SECURITY: Tag this card to this specific user
+        userId: userId,
         createdAt: new Date().toISOString(),
       });
       router.push(`/dashboard/invitations/${docRef.id}/edit`);
@@ -65,6 +63,7 @@ export default function DashboardPage() {
     }
   };
 
+  // 4. Delete an invitation
   const handleDelete = async (id: string) => {
     if (confirm("Adakah anda pasti mahu memadam kad jemputan ini?")) {
       try {
@@ -76,6 +75,7 @@ export default function DashboardPage() {
     }
   };
 
+  // 5. Share logic
   const handleShare = (invitationId: string, isPaid: boolean) => {
     if (!isPaid) {
       alert("⚠️ MAAF, KAD BELUM DIAKTIFKAN.\n\nSila buat pembayaran sebanyak RM10 untuk membuka kunci fungsi perkongsian kepada tetamu.");
@@ -89,22 +89,48 @@ export default function DashboardPage() {
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
   };
 
+  // 6. Logout Logic
+  const handleLogout = async () => {
+    const auth = getAuth();
+    try {
+      await signOut(auth);
+      router.push('/login');
+    } catch (error) {
+      console.error("Ralat semasa log keluar:", error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 p-6 md:p-12 font-sans text-slate-800">
       <div className="max-w-5xl mx-auto">
+        
+        {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-slate-900">Dashboard Jemputan</h1>
             <p className="text-slate-500 mt-1">Urus dan pantau kad jemputan digital anda di sini.</p>
           </div>
-          <button 
-            onClick={handleCreateNew}
-            className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-lg font-medium transition-colors shadow-md"
-          >
-            <Plus size={20} /> Cipta Kad Baru
-          </button>
+          
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={handleCreateNew}
+              className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-lg font-medium transition-colors shadow-md"
+            >
+              <Plus size={20} /> <span className="hidden sm:inline">Cipta Kad Baru</span>
+            </button>
+            
+            <button 
+              onClick={handleLogout}
+              className="flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 px-4 py-3 rounded-lg font-medium transition-colors border border-red-200"
+              title="Log Keluar"
+            >
+              <LogOut size={20} />
+              <span className="hidden md:inline">Log Keluar</span>
+            </button>
+          </div>
         </div>
 
+        {/* Invitations Grid */}
         {loading ? (
           <div className="flex justify-center items-center h-40">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
@@ -124,6 +150,8 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {invitations.map((inv) => (
               <div key={inv.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                
+                {/* Card Header & Status */}
                 <div className="p-5 border-b border-slate-100 flex justify-between items-start bg-slate-50/50">
                   <div>
                     <h3 className="font-bold text-lg text-slate-800 line-clamp-1">
@@ -143,7 +171,10 @@ export default function DashboardPage() {
                     </span>
                   )}
                 </div>
+
+                {/* Card Actions */}
                 <div className="p-5 flex-1 flex flex-col justify-end gap-3">
+                  
                   <div className="flex gap-2 mb-2">
                     <button 
                       onClick={() => router.push(`/dashboard/invitations/${inv.id}/edit`)}
@@ -159,6 +190,8 @@ export default function DashboardPage() {
                       <Trash2 size={16} />
                     </button>
                   </div>
+
+                  {/* Smart Share Button */}
                   <button 
                     onClick={() => handleShare(inv.id, inv.isPaid)}
                     className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-sm font-bold transition-all ${
@@ -170,6 +203,7 @@ export default function DashboardPage() {
                     <Share2 size={16} />
                     {inv.isPaid ? 'Share ke WhatsApp' : 'Share (Dikunci)'}
                   </button>
+
                 </div>
               </div>
             ))}
